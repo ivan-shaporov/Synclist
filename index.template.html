@@ -227,9 +227,9 @@
     // Initial load
     fetchItems();
     
-    // Poll every 5 seconds if online
+    // Poll every 5 seconds if online, but only when visible to save battery
     setInterval(() => {
-      if (getTableParts()) fetchItems();
+      if (!document.hidden && getTableParts()) fetchItems();
     }, 5000);
 
   </script>
