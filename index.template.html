@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopping List</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 16px;
+      background: #fafafa;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin-top: 24px;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+      color: #444;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      padding: 10px 6px;
+      border-bottom: 1px solid #ddd;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    #status {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Shopping List</h1>
+  <div id="status">Connecting...</div>
+
+  <h2>To Buy</h2>
+  <ul id="unchecked"></ul>
+
+  <h2>Bought</h2>
+  <ul id="checked"></ul>
+
+  <script>
+    // --- CONFIGURATION ---
+    // This is a placeholder. The build script will replace it with your real SAS token.
+    const TABLE_SAS_URL = "__SAS_TOKEN__"; 
+    const PARTITION_KEY = "shopping-list";
+    // ---------------------
+
+    // Local fallback data
+    let sampleItems = [
+      { id: "1", text: "bread", checked: false, order: 100 },
+      { id: "2", text: "eggs", checked: false, order: 99 },
+      { id: "3", text: "milk", checked: false, order: 98 }
+    ];
+
+    let items = [];
+
+    // Helper to parse URL
+    function getTableParts() {
+      // Split the string to avoid replacement by build script
+      if (!TABLE_SAS_URL || TABLE_SAS_URL.includes("__SAS_" + "TOKEN__")) return null;
+      try {
+        const urlObj = new URL(TABLE_SAS_URL);
+        const baseUrl = urlObj.origin + urlObj.pathname;
+        const sasToken = urlObj.search;
+        return { baseUrl, sasToken };
+      } catch (e) {
+        console.error("Invalid SAS URL", e);
+        return null;
+      }
+    }
+
+    async function fetchItems() {
+      const parts = getTableParts();
+      if (!parts) {
+        console.log("No SAS token configured. Using local mode.");
+        document.getElementById('status').innerText = "Offline Mode (bad config)";
+        items = [...sampleItems];
+        render();
+        return;
+      }
+
+      document.getElementById('status').innerText = "Syncing...";
+      
+      try {
+        const response = await fetch(`${parts.baseUrl}${parts.sasToken}`, {
+          headers: { "Accept": "application/json;odata=nometadata" }
+        });
+        
+        if (!response.ok) throw new Error(`Error fetching: ${response.statusText}`);
+        
+        const data = await response.json();
+        
+        if (data.value.length === 0) {
+          console.log("Table empty, seeding with sample items...");
+          items = [...sampleItems];
+          render(); // Show immediately
+          
+          // Upload all items sequentially
+          document.getElementById('status').innerText = "Seeding cloud...";
+          for (const item of items) {
+            await updateItemInCloud(item);
+          }
+          document.getElementById('status').innerText = "Seeded & Synced";
+        } else {
+          // Map Azure Table entities to our format
+          items = data.value.map(entity => ({
+            id: entity.RowKey,
+            text: entity.Text || entity.text, // Handle case sensitivity
+            checked: entity.Checked || entity.checked || false,
+            order: entity.Order || entity.order || 0,
+            etag: entity['odata.etag']
+          }));
+          document.getElementById('status').innerText = "Synced";
+          render();
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').innerText = "Error syncing";
+      }
+    }
+
+    async function updateItemInCloud(item) {
+      const parts = getTableParts();
+      if (!parts) return;
+
+      // Construct Entity URL: Base(PartitionKey='...', RowKey='...')?SAS
+      const entityUrl = `${parts.baseUrl}(PartitionKey='${PARTITION_KEY}',RowKey='${item.id}')${parts.sasToken}`;
+      
+      const payload = {
+        PartitionKey: PARTITION_KEY,
+        RowKey: item.id,
+        Text: item.text,
+        Checked: item.checked,
+        Order: item.order
+      };
+
+      try {
+        // Use PUT to replace/update
+        await fetch(entityUrl, {
+          method: "PUT", 
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error("Failed to update item", err);
+        document.getElementById('status').innerText = "Failed to save change to cloud";
+      }
+    }
+
+    function render() {
+      const uncheckedEl = document.getElementById("unchecked");
+      const checkedEl = document.getElementById("checked");
+
+      uncheckedEl.innerHTML = "";
+      checkedEl.innerHTML = "";
+
+      // Sort: Unchecked (Order DESC), Checked (Order DESC)
+      const uncheckedItems = items.filter(i => !i.checked).sort((a, b) => b.order - a.order);
+      const checkedItems = items.filter(i => i.checked).sort((a, b) => b.order - a.order);
+
+      uncheckedItems.forEach(item => uncheckedEl.appendChild(renderItem(item)));
+      checkedItems.forEach(item => checkedEl.appendChild(renderItem(item)));
+    }
+
+    function renderItem(item) {
+      const li = document.createElement("li");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = item.checked;
+      checkbox.addEventListener("change", () => toggleItem(item.id));
+
+      li.appendChild(checkbox);
+      li.appendChild(document.createTextNode(item.text));
+      return li;
+    }
+
+    async function toggleItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      // Optimistic update
+      item.checked = !item.checked;
+      item.order = Date.now(); // Move to top logic
+      
+      render();
+
+      // Persist
+      if (getTableParts()) {
+        await updateItemInCloud(item);
+      } else {
+        // Update local fallback
+        const sampleItem = sampleItems.find(i => i.id === id);
+        if (sampleItem) {
+            sampleItem.checked = item.checked;
+            sampleItem.order = item.order;
+        }
+      }
+    }
+
+    // Initial load
+    fetchItems();
+    
+    // Poll every 5 seconds if online
+    setInterval(() => {
+      if (getTableParts()) fetchItems();
+    }, 5000);
+
+  </script>
+
+</body>
+</html>
