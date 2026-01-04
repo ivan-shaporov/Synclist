@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shopping List</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='21' r='1'/%3E%3Ccircle cx='20' cy='21' r='1'/%3E%3Cpath d='M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6'/%3E%3C/svg%3E">
+  <title>Checklist</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 11l3 3L22 4'/%3E%3Cpath d='M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'/%3E%3C/svg%3E">
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -69,8 +69,6 @@
   </style>
 </head>
 <body>
-
-  <h1>Shopping List</h1>
   
   <div id="addItemContainer" style="display: none; gap: 8px; margin-bottom: 16px;">
     <input type="text" id="newItemInput" placeholder="Add new item..." style="flex-grow: 1; padding: 8px; font-size: 1rem;">
@@ -79,16 +77,16 @@
 
   <div id="status">Connecting...</div>
 
-  <h2>To Buy</h2>
+  <h2>Pending</h2>
   <ul id="unchecked"></ul>
 
-  <h2>Bought</h2>
+  <h2>Done</h2>
   <ul id="checked"></ul>
 
   <script>
     // --- CONFIGURATION ---
     // SAS token is now read from the URL hash (e.g. index.html#https://...)
-    const PARTITION_KEY = "shopping-list";
+    const PARTITION_KEY = "shared-list";
     // ---------------------
 
     const urlParams = new URLSearchParams(window.location.search);

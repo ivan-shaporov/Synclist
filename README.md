@@ -1,8 +1,8 @@
-# Shared Shopping List
+# Shared Checklist
 
 > **Disclaimer**: This project is 100% vibecoded.
 
-A simple, persistent, real-time shopping list web app that works in a browser.
+A simple, persistent, real-time checklist web app that works in a browser.
 
 ## Features
 
@@ -28,7 +28,7 @@ This project includes a Bicep template that automates the entire infrastructure 
   * Allowed Origins: `*` (Allows access from any domain, including your static site).
   * Allowed Methods: `GET`, `HEAD`, `MERGE`, `POST`, `OPTIONS`, `PUT`, `DELETE`.
   * Max Age: `200` seconds.
-* **Creates the `shoppinglist` table**.
+* **Creates the `checklist` table**.
 * **Sets up Stored Access Policies** (Best Practice):
   * `webfulledit`: Permissions `raud` (Read, Add, Update, Delete). Use this for Edit mode.
   * `webqueryupdate`: Permissions `ru` (Read, Update). Use this for standard View mode.
@@ -64,7 +64,7 @@ This project includes a Bicep template that automates the entire infrastructure 
 After deployment, you need to generate a SAS token to allow the app to access the database. The Bicep template has already created the necessary security policies (`webfulledit` and `webqueryupdate`).
 
 1. Go to the **Azure Portal** > Your Storage Account > **Storage Browser** > **Tables**.
-2. Select the table (e.g., `shoppinglist`).
+2. Select the table (e.g., `checklist`).
 3. Click **Access Policy** to verify the policies exist.
 4. Use **Azure Storage Explorer** or the **Azure Portal** to generate a SAS token:
 
@@ -73,7 +73,7 @@ After deployment, you need to generate a SAS token to allow the app to access th
    * **Access Policy**: Select `webfulledit` (for full access) or `webqueryupdate` (for standard access).
    * **Generate**.
 
-5. Copy the **Table Service SAS URL** (the full URL, e.g., `https://<account>.table.core.windows.net/shoppinglist?sv=...`).
+5. Copy the **Table Service SAS URL** (the full URL, e.g., `https://<account>.table.core.windows.net/checklist?sv=...`).
 
 ### 3. Construct Access URL
 
@@ -86,7 +86,7 @@ Format:
 `[Static Website URL]/#[SAS Token]`
 
 Example:
-`https://myshoppinglist.z22.web.core.windows.net/#https://mystorage.table.core.windows.net/shoppinglist?sv=2019-02-02&tn=shoppinglist&sig=...`
+`https://mychecklist.z22.web.core.windows.net/#https://mystorage.table.core.windows.net/checklist?sv=2019-02-02&tn=checklist&sig=...`
 
 > **Tip**: Bookmark this URL on your devices. The SAS token remains in your browser's hash fragment and is never sent to the hosting server.
 
@@ -94,7 +94,7 @@ Example:
 
 ### View Mode
 
-By default, the list is in "View Mode". You can check and uncheck items, but you cannot add or delete them. This is great for shopping to avoid accidental edits.
+By default, the list is in "View Mode". You can check and uncheck items, but you cannot add or delete them. This is great for execution phase to avoid accidental edits.
 
 URL format:
 `https://<your-website>/index.html#<YOUR_webqueryupdate_SAS_URL>`
@@ -110,7 +110,7 @@ URL format:
 * **Delete Item**: Click the "Delete" button next to an item (requires confirmation).
 
   **Example:**
-  `https://myshoppinglist.web.core.windows.net/index.html#https://mystorage.table.core.windows.net/shoppinglist?sv=2019-02-02&sig=...`
+  `https://mychecklist.web.core.windows.net/index.html#https://mystorage.table.core.windows.net/checklist?sv=2019-02-02&sig=...`
 
 ## Managing Items
 
