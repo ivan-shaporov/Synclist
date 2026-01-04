@@ -4,6 +4,10 @@
 
 A simple, persistent, real-time checklist web app that works in a browser.
 
+Perfect for **Shared Shopping Lists**.
+
+* **Scenario**: You add "Milk" to the list at home. Your partner sees it appear instantly on their phone at the store and checks it off.
+
 ## Features
 
 * **Shared State**: Syncs between multiple users in near real-time.
