@@ -6,6 +6,12 @@
             "type": "shell",
             "command": "az deployment group create --resource-group ${input:resourceGroup} --template-file main.bicep --name deploy --parameters storageAccountName=${input:storageAccountName}",
             "problemMatcher": []
+        },
+        {
+            "label": "Upload index.html",
+            "type": "shell",
+            "command": "az storage blob upload --auth-mode login --account-name ${input:storageAccountName} --container-name '$web' --name index.html --file index.html --overwrite true --content-type text/html",
+            "problemMatcher": []
         }
     ],
     "inputs": [
@@ -19,7 +25,6 @@
             "id": "storageAccountName",
             "type": "promptString",
             "description": "Enter the Storage Account Name (globally unique)",
-            "default": "synclist"
         }
     ]
 }

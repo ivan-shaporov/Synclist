@@ -128,3 +128,17 @@ URL format:
 
 * **Editing**: The app currently does not support editing items via the UI.
 * **Admin**: You can manage the list items (add new ones, change text, delete old ones) directly in the Azure Table using tools like [Microsoft Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer/) or the Azure Portal.
+
+## Development
+
+### Updating the App
+
+If you make changes to `index.html`, you can upload the new version without re-deploying the entire infrastructure.
+
+**Using VS Code Task:**
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+2. Type **"Tasks: Run Task"**.
+3. Select **"Upload index.html"**.
+4. Enter the **Storage Account Name** when prompted.
+
