@@ -208,6 +208,7 @@
           }));
           document.getElementById('status').innerText = "Synced";
           render();
+          console.log(`[${new Date()}] Refreshed ${data.value.length} items`);
         }
       } catch (err) {
         console.error(err);
@@ -521,8 +522,25 @@
 
     // Initial load
     fetchItems();
+
+    // Refresh immediately when the tab/window becomes active.
+    // (The 15s poll only runs on a timer; this avoids waiting for the next tick.)
+    let lastActivationFetchAt = 0;
+    function fetchItemsIfActive() {
+      // Throttle to avoid double-firing (e.g., focus + visibilitychange).
+      const now = Date.now();
+      if (now - lastActivationFetchAt < 1500) return;
+      lastActivationFetchAt = now;
+      fetchItems();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) fetchItemsIfActive();
+    });
+    window.addEventListener('focus', fetchItemsIfActive);
+    window.addEventListener('pageshow', fetchItemsIfActive);
     
-    // Poll every 5 seconds if online, but only when visible to save battery
+    // Poll every 15 seconds if online, but only when visible to save battery
     setInterval(() => {
       if (!document.hidden && getTableParts()) fetchItems();
     }, 15000);
